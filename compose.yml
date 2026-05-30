@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+
+  frontend:
+    build:
+      context: ./frontend
+    image: ascii-frontend:latest
+    ports:
+      - "8080:80"  
+    depends_on:
+      - backend
+
+ 
+  backend:
+    build:
+      context: ./backend
+    image: ascii-backend:latest
+    depends_on:
+      - redis-cache
+
+  
+  redis-cache:
+    build:
+      context: .
+      dockerfile: Dockerfile-redis
+    ports:
+      - "6379:6379"

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Арт Генератор</title>
+    <style>
+        :root {
+            --bg-color: #1e1e24;
+            --container-bg: #2a2a35;
+            --text-color: #e0e0e0;
+            --accent-purple: #bb86fc;
+            --accent-teal: #03dac6;
+            --button-hover: #b37af2;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+        }
+
+        h1 {
+            color: var(--accent-teal);
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            background-color: #121214;
+            border: 2px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            width: 60%;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-purple);
+        }
+
+        button {
+            background-color: var(--accent-purple);
+            color: #121214;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #source-output {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            color: #888;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .output-box {
+            background-color: #121214;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            border: 1px solid #333;
+        }
+
+        pre {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.2;
+            color: var(--accent-teal);
+            margin: 0;
+            text-align: left;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>ASCII Арт Генератор</h1>
+        
+        <div class="input-group">
+            <input type="text" id="text-input" placeholder="Въведи дума или текст..." autocomplete="off">
+            <button id="generate-btn">Генерирай</button>
+        </div>
+
+        <div id="source-output">Източник: готовност</div>
+
+        <div class="output-box">
+            <pre id="ascii-output">Вашият ASCII арт ще се появи тук...</pre>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', generateASCII);
+
+
+        document.getElementById('text-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateASCII();
+            }
+        });
+
+        async function generateASCII() {
+            const textInput = document.getElementById('text-input').value;
+            const asciiOutput = document.getElementById('ascii-output');
+            const sourceOutput = document.getElementById('source-output');
+
+            if (!textInput.trim()) {
+                alert('Моля, въведете някакъв текст!');
+                return;
+            }
+
+            try {
+                
+                asciiOutput.textContent = 'Генериране...';
+                sourceOutput.textContent = 'Източник: изчисляване...';
+                sourceOutput.style.color = '#888';
+
+              
+                const response = await fetch(`/api/generate?text=${encodeURIComponent(textInput.trim())}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Грешка при връзката с бекенда');
+                }
+
+                const data = await response.json();
+
+              
+                asciiOutput.textContent = data.ascii;
+
+         
+                if (data.cached === true) {
+                    sourceOutput.textContent = 'Източник: Кеш (Redis) ⚡';
+                    sourceOutput.style.color = 'var(--accent-purple)';
+                } else {
+                    sourceOutput.textContent = 'Източник: Нова генерация (Flask) ⚙️';
+                    sourceOutput.style.color = 'var(--accent-teal)';
+                }
+
+            } catch (error) {
+                console.error('Грешка при генериране:', error);
+                asciiOutput.textContent = `Грешка: ${error.message}`;
+                sourceOutput.textContent = 'Източник: Неуспешна заявка';
+                sourceOutput.style.color = '#ff1744'; 
+            }
+        }
+    </script>
+
+</body>
+</html>
